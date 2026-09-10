@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RPGT Calculator">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#128a76"/>
+      <stop offset="1" stop-color="#0a5044"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <!-- roof -->
+  <path d="M256 77 L435 233 H77 Z" fill="#d8ae5c"/>
+  <!-- body -->
+  <path d="M105 233 H407 V435 H105 Z" fill="#ffffff"/>
+  <!-- doorway -->
+  <rect x="223" y="328" width="66" height="107" fill="#0a5044"/>
+</svg>
