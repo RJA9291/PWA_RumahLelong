@@ -1,7 +1,7 @@
 {
-  "name": "Lelong Academy RPGT Calculator",
-  "short_name": "RPGT Calc",
-  "description": "Estimate Malaysian Real Property Gains Tax for individuals, companies and non-citizens.",
+  "name": "Lelong Academy Calculators",
+  "short_name": "Lelong Calc",
+  "description": "Auction flip profit & ROI plus Malaysian RPGT — for individuals, companies and non-citizens.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

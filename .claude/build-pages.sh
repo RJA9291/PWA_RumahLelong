@@ -7,7 +7,7 @@ cd "$root" || exit 0
 
 # ---------------- CONFIG ----------------
 SRC="app.html"
-TITLE="RPGT Calculator"
+TITLE="Lelong Academy Calculators"
 THEME_LIGHT="#0d7a68"
 THEME_DARK="#0d1513"
 BG_LIGHT="#f2f4ef"
@@ -23,7 +23,7 @@ cat <<HEAD
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${TITLE}</title>
-<meta name="description" content="Estimate Malaysian Real Property Gains Tax (RPGT) for individuals, companies and non-citizens.">
+<meta name="description" content="Auction flip profit & ROI plus Malaysian RPGT for individuals, companies and non-citizens.">
 <meta name="theme-color" content="${THEME_LIGHT}" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="${THEME_DARK}" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="./manifest.webmanifest">

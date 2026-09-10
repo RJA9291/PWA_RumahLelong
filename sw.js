@@ -1,7 +1,7 @@
 /* RPGT Calculator — service worker
    Network-first for navigations (so updates show), cache-first for static assets.
    Bump CACHE whenever assets change. */
-const CACHE = 'rpgt-v1';
+const CACHE = 'lelong-v2';
 const ASSETS = [
   './',
   './index.html',
