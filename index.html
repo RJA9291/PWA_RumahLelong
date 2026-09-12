@@ -259,6 +259,15 @@ footer a:hover{text-decoration:underline}
 .fempty{color:var(--ink-faint);font-size:14px;padding:22px 4px;text-align:center;line-height:1.5}
 .flag{margin:12px 0 0;padding:11px 13px;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;line-height:1.5;
   background:color-mix(in srgb,var(--warn) 13%,transparent);border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);color:var(--warn)}
+.basis{margin-top:14px}
+.basis-body{padding:0 16px 12px}
+.bi{padding:11px 0;border-bottom:1px solid var(--line)}
+.bi:last-child{border-bottom:0}
+.bi-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.bi-n{font-weight:600;color:var(--ink);font-size:13.5px}
+.bi-h .frac{color:var(--primary-ink);font-weight:700;font-variant-numeric:tabular-nums}
+.bi-r{font-size:12.5px;color:var(--ink-soft);margin-top:4px;line-height:1.5}
+.bi-d{font-size:11.5px;color:var(--ink-faint);margin-top:3px;font-style:italic}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -588,7 +597,7 @@ footer a:hover{text-decoration:underline}
   </section>
 
   <footer>
-    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v4</span></span>
+    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v5</span></span>
     <span class="brandmark">Lelong Academy</span>
   </footer>
 </div>
@@ -790,8 +799,8 @@ footer a:hover{text-decoration:underline}
       var gfather=g('gfather')?1:0, gmother=g('gmother');
       var son=g('son'), daughter=g('daughter'), grandson=g('grandson'), granddaughter=g('granddaughter');
       var fbro=g('fbro'), fsis=g('fsis'), cbro=g('cbro'), csis=g('csis'), uter=g('uterine');
-      var flags=[], shares={};
-      function set(k,fr){ shares[k]=fr; }
+      var flags=[], shares={}, why={};
+      function set(k,fr,code){ shares[k]=fr; if(code) why[k]=code; }
 
       if(father && gfather){ gfather=0; }
       if(mother && gmother){ gmother=0; }
@@ -815,38 +824,39 @@ footer a:hover{text-decoration:underline}
 
       var umariyyah=(husband||wife>0) && father && mother && !hasDesc && sibCountRaw===0 && !gfather;
 
-      if(husband){ set('husband', hasDesc?F(1,4):F(1,2)); }
-      if(wife>0){ set('wife', hasDesc?F(1,8):F(1,4)); }
+      if(husband){ set('husband', hasDesc?F(1,4):F(1,2), hasDesc?'H_quarter':'H_half'); }
+      if(wife>0){ set('wife', hasDesc?F(1,8):F(1,4), hasDesc?'W_eighth':'W_quarter'); }
 
       if(umariyyah){
         var spouseFr = husband? shares['husband'] : shares['wife'];
         var remainder = sub(F(1,1), spouseFr);
-        set('mother', mul(F(1,3), remainder));
+        set('mother', mul(F(1,3), remainder), 'M_umar');
       } else {
-        if(mother){ var mr=hasDesc||(sibCountRaw>=2); set('mother', mr?F(1,6):F(1,3)); }
-        if(gmother>0 && !mother){ set('gmother', F(1,6)); }
+        if(mother){ var mr=hasDesc||(sibCountRaw>=2); set('mother', mr?F(1,6):F(1,3), mr?'M_sixth':'M_third'); }
+        if(gmother>0 && !mother){ set('gmother', F(1,6), 'GM_sixth'); }
       }
 
       var patriarch = father? 'father' : (gfather? 'gfather' : null);
+      var pcode = father? 'F' : 'G';
       if(father || gfather){
-        if(hasMaleDesc){ set(patriarch, F(1,6)); }
-        else if(hasDesc){ set(patriarch, F(1,6)); }
-        else { set(patriarch, F(0,1)); }
+        if(hasMaleDesc){ set(patriarch, F(1,6), pcode+'_sixth_male'); }
+        else if(hasDesc){ set(patriarch, F(1,6), pcode+'_sixth_asobah'); }
+        else { set(patriarch, F(0,1), pcode+'_asobah'); }
       }
 
       var asobahGroup=null;
       if(son>0){ asobahGroup={type:'children'}; }
       else {
-        if(daughter>=2){ set('daughter', F(2,3)); }
-        else if(daughter===1){ set('daughter', F(1,2)); }
+        if(daughter>=2){ set('daughter', F(2,3), 'D_twothird'); }
+        else if(daughter===1){ set('daughter', F(1,2), 'D_half'); }
         if(grandson>0){ asobahGroup={type:'grandchildren'}; }
         else if(granddaughter>0 && !gdBlocked){
-          if(daughter===1){ set('granddaughter', F(1,6)); }
-          else if(daughter===0){ set('granddaughter', granddaughter>=2?F(2,3):F(1,2)); }
+          if(daughter===1){ set('granddaughter', F(1,6), 'GD_sixth'); }
+          else if(daughter===0){ set('granddaughter', granddaughter>=2?F(2,3):F(1,2), granddaughter>=2?'GD_twothird':'GD_half'); }
         }
       }
 
-      if(uter>0){ set('uterine', uter>=2?F(1,3):F(1,6)); }
+      if(uter>0){ set('uterine', uter>=2?F(1,3):F(1,6), uter>=2?'U_third':'U_sixth'); }
 
       var femaleDescPresent=(daughter>0)||(granddaughter>0 && !gdBlocked);
       if(!fullBlocked && (fbro>0||fsis>0)){
@@ -854,14 +864,14 @@ footer a:hover{text-decoration:underline}
           if(!asobahGroup || (asobahGroup.type!=='children'&&asobahGroup.type!=='grandchildren')){ asobahGroup={type:'fullsibs'}; }
         } else {
           if(femaleDescPresent){ if(!asobahGroup) asobahGroup={type:'fullsis_maa'}; }
-          else { set('fsis', fsis>=2?F(2,3):F(1,2)); }
+          else { set('fsis', fsis>=2?F(2,3):F(1,2), fsis>=2?'FS_twothird':'FS_half'); }
         }
       }
       if(!consBlocked && (cbro>0||csis>0) && !(asobahGroup&&asobahGroup.type==='fullsibs')){
         if(cbro>0){ if(!asobahGroup) asobahGroup={type:'conssibs'}; }
         else {
-          if(fsis===1 && !femaleDescPresent){ set('csis', F(1,6)); }
-          else if(fsis===0 && !femaleDescPresent){ set('csis', csis>=2?F(2,3):F(1,2)); }
+          if(fsis===1 && !femaleDescPresent){ set('csis', F(1,6), 'CS_sixth'); }
+          else if(fsis===0 && !femaleDescPresent){ set('csis', csis>=2?F(2,3):F(1,2), csis>=2?'CS_twothird':'CS_half'); }
           else if(femaleDescPresent && fsis===0){ if(!asobahGroup) asobahGroup={type:'conssis_maa'}; }
         }
       }
@@ -898,18 +908,18 @@ footer a:hover{text-decoration:underline}
               }
             }
           };
-          if(son>0){ distributeChildren(shares,'son','daughter',son,daughter,residue); }
-          else if(asobahGroup && asobahGroup.type==='grandchildren'){ distributeChildren(shares,'grandson','granddaughter',grandson,granddaughter,residue); }
+          if(son>0){ distributeChildren(shares,'son','daughter',son,daughter,residue); why['son']='SON_asobah'; if(daughter>0) why['daughter']='D_asobah'; }
+          else if(asobahGroup && asobahGroup.type==='grandchildren'){ distributeChildren(shares,'grandson','granddaughter',grandson,granddaughter,residue); why['grandson']='GS_asobah'; if(granddaughter>0) why['granddaughter']='GD_asobah'; }
           else if(father || gfather){ if(!hasMaleDesc){ shares[patriarch]=add(shares[patriarch]||F(0,1), residue); } else { doRadd(); } }
-          else if(asobahGroup && asobahGroup.type==='fullsibs'){ distributeChildren(shares,'fbro','fsis',fbro,fsis,residue); }
-          else if(asobahGroup && asobahGroup.type==='fullsis_maa'){ shares['fsis']=add(shares['fsis']||F(0,1), residue); }
-          else if(asobahGroup && asobahGroup.type==='conssibs'){ distributeChildren(shares,'cbro','csis',cbro,csis,residue); }
-          else if(asobahGroup && asobahGroup.type==='conssis_maa'){ shares['csis']=add(shares['csis']||F(0,1), residue); }
+          else if(asobahGroup && asobahGroup.type==='fullsibs'){ distributeChildren(shares,'fbro','fsis',fbro,fsis,residue); why['fbro']='FB_asobah'; if(fsis>0) why['fsis']='FS_asobah_bil'; }
+          else if(asobahGroup && asobahGroup.type==='fullsis_maa'){ shares['fsis']=add(shares['fsis']||F(0,1), residue); why['fsis']='FS_asobah_maa'; }
+          else if(asobahGroup && asobahGroup.type==='conssibs'){ distributeChildren(shares,'cbro','csis',cbro,csis,residue); why['cbro']='CB_asobah'; if(csis>0) why['csis']='CS_asobah_bil'; }
+          else if(asobahGroup && asobahGroup.type==='conssis_maa'){ shares['csis']=add(shares['csis']||F(0,1), residue); why['csis']='CS_asobah_maa'; }
           else { doRadd(); }
         }
       }
       for(var kz in shares){ if(isZero(shares[kz])) delete shares[kz]; }
-      return { shares:shares, flags:flags, awl:awl, radd:radd, umariyyah:umariyyah, baitulmal:baitulmal,
+      return { shares:shares, why:why, flags:flags, awl:awl, radd:radd, umariyyah:umariyyah, baitulmal:baitulmal,
                counts:{gfather:gfather,gmother:gmother,grandson:grandson,granddaughter:granddaughter,fbro:fbro,fsis:fsis,cbro:cbro,csis:csis,uter:uter} };
     }
 
@@ -940,6 +950,44 @@ footer a:hover{text-decoration:underline}
       cbro:['Paternal half-brother','','paternal half-brothers'],csis:['Paternal half-sister','','paternal half-sisters'],
       uterine:['Maternal half-sibling','','maternal half-siblings']};
     var ORDER=['husband','wife','father','mother','gfather','gmother','son','daughter','grandson','granddaughter','fbro','fsis','cbro','csis','uterine'];
+    var WHY={
+      H_half:['No child or grandchild survives — the husband takes 1/2.','Quran · An-Nisa 4:12'],
+      H_quarter:['A child/grandchild survives — the husband takes 1/4.','Quran · An-Nisa 4:12'],
+      W_quarter:['No child or grandchild survives — the wife (or wives together) take 1/4.','Quran · An-Nisa 4:12'],
+      W_eighth:['A child/grandchild survives — the wife (or wives together) take 1/8.','Quran · An-Nisa 4:12'],
+      M_third:['No child/grandchild and fewer than two siblings — the mother takes 1/3.','Quran · An-Nisa 4:11'],
+      M_sixth:['A child/grandchild (or two or more siblings) survives — the mother takes 1/6.','Quran · An-Nisa 4:11'],
+      M_umar:['Spouse with both parents, no child and no siblings — the mother takes 1/3 of the remainder after the spouse (the Umariyyatan ruling).','Ijtihad of Sayyidina Umar & the Companions'],
+      F_sixth_male:['A son or grandson survives — the father takes a fixed 1/6.','Quran · An-Nisa 4:11'],
+      F_sixth_asobah:['Only daughters/granddaughters survive — the father takes 1/6 plus the remainder as asobah.','Quran · An-Nisa 4:11; hadith of asobah (Bukhari & Muslim)'],
+      F_asobah:['No child or grandchild — the father takes the whole remainder as asobah.','Hadith of asobah (Bukhari & Muslim)'],
+      G_sixth_male:['A son or grandson survives — the grandfather (in the father’s place) takes a fixed 1/6.','Hadith (Abu Daud & Nasa’i)'],
+      G_sixth_asobah:['Only daughters/granddaughters survive — the grandfather takes 1/6 plus the remainder.','Hadith (Abu Daud & Nasa’i); hadith of asobah'],
+      G_asobah:['No child or grandchild — the grandfather takes the remainder as asobah.','Hadith (Abu Daud & Nasa’i); hadith of asobah'],
+      GM_sixth:['There is no mother — the grandmother(s) take 1/6.','Hadith of Buraidah (Abu Daud & Nasa’i)'],
+      SON_asobah:['Sons take the remainder as asobah; with daughters, each son takes twice a daughter’s share (2:1).','Quran · An-Nisa 4:11'],
+      D_asobah:['With a son present, daughters share the remainder with the sons at 2:1.','Quran · An-Nisa 4:11'],
+      D_half:['One daughter and no son — she takes 1/2.','Quran · An-Nisa 4:11'],
+      D_twothird:['Two or more daughters and no son — they share 2/3.','Quran · An-Nisa 4:11'],
+      GS_asobah:['No son — grandsons (through a son) take the remainder as asobah, 2:1 with granddaughters.','Quran · An-Nisa 4:11; ijma'],
+      GD_asobah:['A grandson makes the granddaughter(s) asobah, sharing the remainder 2:1.','Quran · An-Nisa 4:11; ijma'],
+      GD_half:['One granddaughter, no daughter or grandson — she takes 1/2.','Quran · An-Nisa 4:11; ijma'],
+      GD_twothird:['Two or more granddaughters, no daughter or grandson — they share 2/3.','Quran · An-Nisa 4:11; ijma'],
+      GD_sixth:['One daughter is present — the granddaughter(s) take 1/6 to complete the two-thirds.','Hadith of Ibn Mas’ud (Bukhari)'],
+      U_sixth:['One maternal half-sibling, with no descendant or father — takes 1/6.','Quran · An-Nisa 4:12'],
+      U_third:['Two or more maternal half-siblings — share 1/3 equally (male = female).','Quran · An-Nisa 4:12'],
+      FS_half:['One full sister, with no child, father or brother — she takes 1/2.','Quran · An-Nisa 4:176'],
+      FS_twothird:['Two or more full sisters (no child, father or brother) — share 2/3.','Quran · An-Nisa 4:176'],
+      FS_asobah_bil:['With a full brother, full sisters share the remainder 2:1.','Quran · An-Nisa 4:176'],
+      FS_asobah_maa:['With daughters/granddaughters present, the full sister takes the remainder as asobah (ma’a ghair).','Hadith of Ibn Mas’ud (Bukhari)'],
+      FB_asobah:['The full brother takes the remainder as asobah.','Quran · An-Nisa 4:176; hadith of asobah'],
+      CS_half:['One paternal half-sister, no full sibling — she takes 1/2.','Quran · An-Nisa 4:176'],
+      CS_twothird:['Two or more paternal half-sisters, no full sibling — share 2/3.','Quran · An-Nisa 4:176'],
+      CS_sixth:['With one full sister, the paternal half-sister(s) take 1/6 to complete the two-thirds.','Quran · An-Nisa 4:176; ijma'],
+      CS_asobah_bil:['With a paternal half-brother, they share the remainder 2:1.','Quran · An-Nisa 4:176'],
+      CS_asobah_maa:['With daughters present, the paternal half-sister takes the remainder as asobah.','Hadith (Bukhari); qiyas on the full sister'],
+      CB_asobah:['The paternal half-brother takes the remainder as asobah (after the full siblings).','Quran · An-Nisa 4:176; fiqh']
+    };
 
     var state={}; HEIRS.forEach(function(h){ state[h.k]=0; });
     var EX={wife:1,father:1,daughter:2};
@@ -1005,8 +1053,21 @@ footer a:hover{text-decoration:underline}
       if(r.umariyyah) ch+=' <span class="chip">Umariyyah</span>';
       chips.innerHTML=ch;
 
+      // basis & evidence (dalil) per heir
+      var basisRows='';
+      ORDER.forEach(function(k){
+        if(!r.shares[k]) return;
+        var code=r.why[k]; if(!code||!WHY[code]) return;
+        var fr=r.shares[k]; var c=(k==='uterine')?cnt('uter'):cnt(k); var d=DISP[k];
+        var nm=(c>1&&d[2])?(c+' '+d[2]):d[0];
+        basisRows+='<div class="bi"><div class="bi-h"><span class="bi-n">'+nm+'</span><span class="frac">'+fr[0]+'/'+fr[1]+'</span></div><div class="bi-r">'+WHY[code][0]+'</div><div class="bi-d">'+WHY[code][1]+'</div></div>';
+      });
+      if(r.awl){ basisRows+='<div class="bi"><div class="bi-r"><b>‘Awl</b> — the fixed shares added up to more than the whole estate, so every share was scaled down in proportion.</div><div class="bi-d">Established rule of the Companions</div></div>'; }
+      if(r.radd){ basisRows+='<div class="bi"><div class="bi-r"><b>Radd</b> — a surplus was left with no residuary heir, so it returns to the fixed-share heirs (a spouse is excluded).</div><div class="bi-d">Practice adopted by JAKIM / e-Faraid</div></div>'; }
+      var basisHtml=basisRows?('<details class="basis" open><summary>Basis for each share (dalil)<span class="ico">›</span></summary><div class="basis-body">'+basisRows+'</div></details>'):'';
+
       var flagsHtml=''; r.flags.forEach(function(f){ flagsHtml+='<div class="flag">⚠ '+f+'</div>'; });
-      out.innerHTML=table+flagsHtml+blockedHtml;
+      out.innerHTML=table+basisHtml+flagsHtml+blockedHtml;
     }
 
     function save(){ try{ var d={e:$('faEstate').value, dec:getDeceased()}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
