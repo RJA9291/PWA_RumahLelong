@@ -527,6 +527,13 @@ footer a:hover{text-decoration:underline}
             <label><input type="radio" name="deceased" value="female"><span>Female<small>leaves a husband</small></span></label>
           </div>
         </fieldset>
+        <fieldset>
+          <legend>Residue rule — baki tanpa asobah</legend>
+          <div class="seg seg2" role="radiogroup" aria-label="Residue rule">
+            <label><input type="radio" name="radd" value="baitulmal" checked><span>To Baitulmal<small>Shafi'i / e-Faraid</small></span></label>
+            <label><input type="radio" name="radd" value="radd"><span>Radd to heirs<small>al-radd</small></span></label>
+          </div>
+        </fieldset>
         <div class="field full estate-field">
           <label for="faEstate">Net estate to distribute <span class="help">after debts, funeral, wasiat &amp; harta sepencarian</span></label>
           <div class="control"><span class="rm">RM</span><input type="text" inputmode="decimal" class="money" id="faEstate" value="240000"></div>
@@ -565,8 +572,8 @@ footer a:hover{text-decoration:underline}
           <p>A nearer heir can screen out a further one (e.g. a son blocks siblings; the father blocks the grandfather), or reduce a share (a mother drops from 1/3 to 1/6 when there are children).</p>
           <h4>3 · Residue (asobah)</h4>
           <p>Whatever remains after the fixed shares goes to the nearest male-line residuary — sons (with daughters 2:1), then father, then brothers, and so on.</p>
-          <h4>4 · 'Awl &amp; radd</h4>
-          <p>If the fixed shares add up to more than the whole estate the shares are scaled down proportionally (<b>'awl</b>); if they add up to less and there is no residuary, the surplus returns to the fixed-share heirs, excluding a spouse (<b>radd</b>).</p>
+          <h4>4 · 'Awl, Baitulmal &amp; radd</h4>
+          <p>If the fixed shares exceed the whole estate they are scaled down proportionally (<b>'awl</b>). If they fall short and there is no residuary heir (asobah), the standard Shafi'i method passes the surplus to the <b>Baitulmal</b> — the default here, matching Malaysia's e-Faraid. Switch the residue rule to <b>Radd to heirs</b> to instead return it to the fixed-share heirs (a spouse excluded).</p>
         </div>
       </details>
       <div class="disclaimer">
@@ -576,7 +583,7 @@ footer a:hover{text-decoration:underline}
   </section>
 
   <footer>
-    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v5</span></span>
+    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v6</span></span>
     <span class="brandmark">Lelong Academy</span>
   </footer>
 </div>
@@ -778,6 +785,7 @@ footer a:hover{text-decoration:underline}
       var gfather=g('gfather')?1:0, gmother=g('gmother');
       var son=g('son'), daughter=g('daughter'), grandson=g('grandson'), granddaughter=g('granddaughter');
       var fbro=g('fbro'), fsis=g('fsis'), cbro=g('cbro'), csis=g('csis'), uter=g('uterine');
+      var raddMode=!!H._radd; // false = Shafi'i (residue -> Baitulmal); true = al-radd to heirs
       var flags=[], shares={}, why={};
       function set(k,fr,code){ shares[k]=fr; if(code) why[k]=code; }
 
@@ -887,14 +895,16 @@ footer a:hover{text-decoration:underline}
               }
             }
           };
+          // no residuary heir: al-radd to heirs, or (Shafi'i default) to Baitulmal
+          var doResidue=function(){ if(raddMode){ doRadd(); } else { baitulmal=residue; } };
           if(son>0){ distributeChildren(shares,'son','daughter',son,daughter,residue); why['son']='SON_asobah'; if(daughter>0) why['daughter']='D_asobah'; }
           else if(asobahGroup && asobahGroup.type==='grandchildren'){ distributeChildren(shares,'grandson','granddaughter',grandson,granddaughter,residue); why['grandson']='GS_asobah'; if(granddaughter>0) why['granddaughter']='GD_asobah'; }
-          else if(father || gfather){ if(!hasMaleDesc){ shares[patriarch]=add(shares[patriarch]||F(0,1), residue); } else { doRadd(); } }
+          else if(father || gfather){ if(!hasMaleDesc){ shares[patriarch]=add(shares[patriarch]||F(0,1), residue); } else { doResidue(); } }
           else if(asobahGroup && asobahGroup.type==='fullsibs'){ distributeChildren(shares,'fbro','fsis',fbro,fsis,residue); why['fbro']='FB_asobah'; if(fsis>0) why['fsis']='FS_asobah_bil'; }
           else if(asobahGroup && asobahGroup.type==='fullsis_maa'){ shares['fsis']=add(shares['fsis']||F(0,1), residue); why['fsis']='FS_asobah_maa'; }
           else if(asobahGroup && asobahGroup.type==='conssibs'){ distributeChildren(shares,'cbro','csis',cbro,csis,residue); why['cbro']='CB_asobah'; if(csis>0) why['csis']='CS_asobah_bil'; }
           else if(asobahGroup && asobahGroup.type==='conssis_maa'){ shares['csis']=add(shares['csis']||F(0,1), residue); why['csis']='CS_asobah_maa'; }
-          else { doRadd(); }
+          else { doResidue(); }
         }
       }
       for(var kz in shares){ if(isZero(shares[kz])) delete shares[kz]; }
@@ -1030,6 +1040,7 @@ footer a:hover{text-decoration:underline}
       if(r.awl) ch+=' <span class="chip">‘Awl</span>';
       if(r.radd) ch+=' <span class="chip">Radd</span>';
       if(r.umariyyah) ch+=' <span class="chip">Umariyyah</span>';
+      if(!isZero(r.baitulmal)) ch+=' <span class="chip">Baitulmal</span>';
       chips.innerHTML=ch;
 
       // basis & evidence (dalil) per heir
@@ -1041,18 +1052,20 @@ footer a:hover{text-decoration:underline}
         var nm=(c>1&&d[2])?(c+' '+d[2]):d[0];
         basisRows+='<div class="bi"><div class="bi-h"><span class="bi-n">'+nm+'</span><span class="frac">'+fr[0]+'/'+fr[1]+'</span></div><div class="bi-r">'+WHY[code][0]+'</div><div class="bi-d">'+WHY[code][1]+'</div></div>';
       });
+      if(!isZero(r.baitulmal)){ basisRows+='<div class="bi"><div class="bi-h"><span class="bi-n">Baitulmal</span><span class="frac">'+r.baitulmal[0]+'/'+r.baitulmal[1]+'</span></div><div class="bi-r">No residuary heir (asobah) survives to take the remainder, so under the Shafi’i view it passes to the Baitulmal (state treasury). Switch the residue rule to <b>Radd to heirs</b> to return it to the fixed-share heirs instead.</div><div class="bi-d">Shafi’i madhab; al-Hukumah / Baitulmal — the last level of heirs</div></div>'; }
       if(r.awl){ basisRows+='<div class="bi"><div class="bi-r"><b>‘Awl</b> — the fixed shares added up to more than the whole estate, so every share was scaled down in proportion.</div><div class="bi-d">Established rule of the Companions</div></div>'; }
-      if(r.radd){ basisRows+='<div class="bi"><div class="bi-r"><b>Radd</b> — a surplus was left with no residuary heir, so it returns to the fixed-share heirs (a spouse is excluded).</div><div class="bi-d">Practice adopted by JAKIM / e-Faraid</div></div>'; }
+      if(r.radd){ basisRows+='<div class="bi"><div class="bi-r"><b>Radd</b> — a surplus was left with no residuary heir, so it returns to the fixed-share heirs (a spouse is excluded).</div><div class="bi-d">Al-radd — welfare practice for heirs in Malaysia</div></div>'; }
       var basisHtml=basisRows?('<details class="basis" open><summary>Basis for each share (dalil)<span class="ico">›</span></summary><div class="basis-body">'+basisRows+'</div></details>'):'';
 
       var flagsHtml=''; r.flags.forEach(function(f){ flagsHtml+='<div class="flag">⚠ '+f+'</div>'; });
       out.innerHTML=table+basisHtml+flagsHtml+blockedHtml;
     }
 
-    function save(){ try{ var d={e:$('faEstate').value, dec:getDeceased()}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
+    function save(){ try{ var d={e:$('faEstate').value, dec:getDeceased(), radd:(getRadd()?'radd':'baitulmal')}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
     function applyState(obj){ HEIRS.forEach(function(h){ clampSet(h.k, obj[h.k]||0); }); }
     function load(){ try{ var raw=localStorage.getItem(LS); if(!raw) return false; var d=JSON.parse(raw);
       if(d.dec){ var rr=document.querySelector('input[name="deceased"][value="'+d.dec+'"]'); if(rr) rr.checked=true; }
+      if(d.radd){ var rd=document.querySelector('input[name="radd"][value="'+d.radd+'"]'); if(rd) rd.checked=true; }
       if(d.e!=null)$('faEstate').value=d.e; applyState(d); return true; }catch(e){ return false; } }
 
     HEIRS.forEach(function(h){
@@ -1075,6 +1088,10 @@ footer a:hover{text-decoration:underline}
     document.querySelectorAll('input[name="deceased"]').forEach(function(r){
       r.addEventListener('change',function(){ applyDeceased(getDeceased()); render(); save(); });
     });
+    function getRadd(){ var el=document.querySelector('input[name="radd"]:checked'); return el?el.value==='radd':false; }
+    document.querySelectorAll('input[name="radd"]').forEach(function(r){
+      r.addEventListener('change',function(){ state._radd=getRadd(); render(); save(); });
+    });
 
     $('faEstate').addEventListener('input',function(){ render(); save(); hideHintIn(form); });
     $('faExample').addEventListener('click',function(){ var m=document.querySelector('input[name="deceased"][value="male"]'); if(m) m.checked=true; applyDeceased('male'); $('faEstate').value='240000'; HEIRS.forEach(function(h){ clampSet(h.k, EX[h.k]||0); }); render(); save(); });
@@ -1082,6 +1099,7 @@ footer a:hover{text-decoration:underline}
 
     if(load()) hideHintIn(form); else applyState(EX);
     applyDeceased(getDeceased());
+    state._radd=getRadd();
     render();
   })();
 
