@@ -71,6 +71,7 @@ h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,46px);line-
 
 /* ---------- layout ---------- */
 .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;align-items:start}
+.grid>*{min-width:0}
 @media (max-width:880px){.grid{grid-template-columns:1fr;gap:18px}}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -205,6 +206,36 @@ footer a{color:var(--primary-ink);text-decoration:none;font-weight:600}
 footer a:hover{text-decoration:underline}
 .brandmark{font-family:var(--serif);font-weight:600;color:var(--ink-soft)}
 
+/* ---------- faraid ---------- */
+.estate-field{margin:0 0 20px}
+.heirgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+@media (max-width:520px){.heirgrid{grid-template-columns:1fr}}
+.heir{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.heir .hn{font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.15}
+.heir .hn small{display:block;font-size:11px;color:var(--ink-faint);font-weight:400}
+.heir.on .hn{color:var(--primary-ink);font-weight:600}
+.step{display:inline-flex;align-items:center;flex:none;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--raised)}
+.step button{appearance:none;border:0;background:transparent;color:var(--ink-soft);width:30px;height:32px;font-size:18px;cursor:pointer;line-height:1;display:grid;place-items:center;transition:.12s}
+.step button:hover{background:var(--surface-2);color:var(--ink)}
+.step button:disabled{opacity:.35;cursor:default}
+.step input{width:32px;height:32px;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);background:transparent;text-align:center;font-family:var(--sans);font-weight:700;font-size:14px;color:var(--ink);padding:0;font-variant-numeric:tabular-nums}
+.step input:focus{outline:none;background:var(--primary-wash)}
+.step input.pos{color:var(--primary-ink)}
+.ftable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
+.ftable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:258px}
+.ftable th,.ftable td{padding:9px 5px;border-bottom:1px solid var(--line);text-align:right;font-size:13.5px}
+@media (max-width:520px){.ftable th,.ftable td{padding:8px 4px;font-size:12.5px}.ftable .amt small,.ftable .hname small{font-size:10.5px}}
+.ftable th{color:var(--ink-faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.ftable td:first-child,.ftable th:first-child{text-align:left}
+.ftable .hname{color:var(--ink);font-weight:600}
+.ftable .hname small{color:var(--ink-faint);font-weight:400;font-size:11.5px}
+.ftable .frac{color:var(--primary-ink);font-weight:700;white-space:nowrap}
+.ftable .amt{color:var(--gold);font-weight:700;white-space:nowrap}
+.ftable tfoot td{border-bottom:0;border-top:1.5px solid var(--line-strong);font-weight:700;color:var(--ink);padding-top:11px}
+.fempty{color:var(--ink-faint);font-size:14px;padding:22px 4px;text-align:center;line-height:1.5}
+.flag{margin:12px 0 0;padding:11px 13px;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;line-height:1.5;
+  background:color-mix(in srgb,var(--warn) 13%,transparent);border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);color:var(--warn)}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -213,14 +244,15 @@ footer a:hover{text-decoration:underline}
     <div class="head-row">
       <div>
         <p class="eyebrow">Lelong Academy · Malaysia</p>
-        <h1>Property Auction Calculators</h1>
-        <p class="sub">Work out the profit and ROI on an auction flip, then estimate the RPGT payable on the gain.</p>
+        <h1>Property &amp; Estate Calculators</h1>
+        <p class="sub">Auction flip profit &amp; ROI, Malaysian RPGT, and Islamic inheritance (Faraid) — in one place.</p>
       </div>
       <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
     </div>
     <nav class="tabs" role="tablist" aria-label="Calculators">
       <button class="tab on" id="tabFlip" role="tab" aria-selected="true" aria-controls="panel-flip" type="button">Flip Profit &amp; ROI</button>
       <button class="tab" id="tabRpgt" role="tab" aria-selected="false" aria-controls="panel-rpgt" type="button">RPGT</button>
+      <button class="tab" id="tabFaraid" role="tab" aria-selected="false" aria-controls="panel-faraid" type="button">Faraid</button>
     </nav>
   </header>
 
@@ -470,8 +502,60 @@ footer a:hover{text-decoration:underline}
     </div>
   </section>
 
+  <!-- ================= FARAID ================= -->
+  <section id="panel-faraid" role="tabpanel" aria-labelledby="tabFaraid" hidden>
+    <div class="grid">
+      <!-- INPUT -->
+      <form class="card panel-pad" id="faraidForm" autocomplete="off" novalidate>
+        <p class="example-hint"><b>Example estate loaded.</b> Set the heirs who are alive.</p>
+        <div class="field full estate-field">
+          <label for="faEstate">Net estate to distribute <span class="help">after debts, funeral, wasiat &amp; harta sepencarian</span></label>
+          <div class="control"><span class="rm">RM</span><input type="text" inputmode="decimal" class="money" id="faEstate" value="240000"></div>
+        </div>
+        <fieldset><legend>Spouse</legend><div class="heirgrid" data-group="spouse"></div></fieldset>
+        <fieldset><legend>Parents &amp; grandparents</legend><div class="heirgrid" data-group="parents"></div></fieldset>
+        <fieldset><legend>Children</legend><div class="heirgrid" data-group="children"></div></fieldset>
+        <fieldset><legend>Grandchildren (through a son)</legend><div class="heirgrid" data-group="grand"></div></fieldset>
+        <fieldset><legend>Siblings</legend><div class="heirgrid" data-group="siblings"></div></fieldset>
+        <div class="actions">
+          <button type="button" class="btn" id="faExample">Load example</button>
+          <button type="button" class="btn" id="faClear">Clear all</button>
+        </div>
+      </form>
+
+      <!-- RESULT -->
+      <div class="result">
+        <div class="card panel-pad">
+          <p class="res-label">Estate distribution (Faraid)</p>
+          <div class="res-meta" id="faChips"><span class="chip rate" id="faAsal">Asal masalah —</span></div>
+          <div id="faOut"><p class="fempty">Select the living heirs to see the Faraid distribution.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info">
+      <details>
+        <summary>How Faraid is calculated <span class="ico">›</span></summary>
+        <div class="det-body">
+          <p>Faraid distributes a Muslim's estate by the fixed shares set in the Quran (An-Nisa 11, 12, 176) and Sunnah, following the Shafi'i method used in Malaysia.</p>
+          <h4>1 · Fixed shares (furud)</h4>
+          <p>Each eligible heir first takes a fixed fraction — <code>1/2, 1/4, 1/8, 2/3, 1/3</code> or <code>1/6</code> — depending on who else survives (e.g. a spouse's share halves when there are children).</p>
+          <h4>2 · Blocking (hijab)</h4>
+          <p>A nearer heir can screen out a further one (e.g. a son blocks siblings; the father blocks the grandfather), or reduce a share (a mother drops from 1/3 to 1/6 when there are children).</p>
+          <h4>3 · Residue (asobah)</h4>
+          <p>Whatever remains after the fixed shares goes to the nearest male-line residuary — sons (with daughters 2:1), then father, then brothers, and so on.</p>
+          <h4>4 · 'Awl &amp; radd</h4>
+          <p>If the fixed shares add up to more than the whole estate the shares are scaled down proportionally (<b>'awl</b>); if they add up to less and there is no residuary, the surplus returns to the fixed-share heirs, excluding a spouse (<b>radd</b>).</p>
+        </div>
+      </details>
+      <div class="disclaimer">
+        <b>Guidance only — not a fatwa or a legal ruling.</b> This tool covers the common heirs and the standard Shafi'i rules, and should be cross-checked against the official <b>e-Faraid</b> / your State Islamic Religious Department (Pejabat Agama / Amanah Raya) before any estate is divided. It does <b>not</b> resolve special cases such as grandfather-with-siblings (jadd wal ikhwah), musytarakah, khunsa, missing heirs (mafqud), an unborn child (janin) or distant kin (dzawil arham) — these are flagged for an officer. The estate entered should already be net of debts, funeral costs, valid wasiat (up to 1/3) and any harta sepencarian.
+      </div>
+    </div>
+  </section>
+
   <footer>
-    <span>Estimates only — not financial or tax advice. RPGT per LHDN Schedule 5. <span id="ver">v2</span></span>
+    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v3</span></span>
     <span class="brandmark">Lelong Academy</span>
   </footer>
 </div>
@@ -489,18 +573,18 @@ footer a:hover{text-decoration:underline}
 
   /* ---------------- TABS ---------------- */
   var TABKEY='lelong.tab';
+  var TABS=['flip','rpgt','faraid'];
+  var TABBTN={flip:'tabFlip',rpgt:'tabRpgt',faraid:'tabFaraid'};
   function activate(name){
-    var flip = name!=='rpgt';
-    $('panel-flip').hidden = !flip;
-    $('panel-rpgt').hidden = flip;
-    $('tabFlip').classList.toggle('on', flip);
-    $('tabRpgt').classList.toggle('on', !flip);
-    $('tabFlip').setAttribute('aria-selected', flip?'true':'false');
-    $('tabRpgt').setAttribute('aria-selected', flip?'false':'true');
-    try{ localStorage.setItem(TABKEY, flip?'flip':'rpgt'); }catch(e){}
+    if(TABS.indexOf(name)<0) name='flip';
+    TABS.forEach(function(p){
+      var panel=$('panel-'+p), btn=$(TABBTN[p]), on=(p===name);
+      if(panel) panel.hidden=!on;
+      if(btn){ btn.classList.toggle('on',on); btn.setAttribute('aria-selected',on?'true':'false'); }
+    });
+    try{ localStorage.setItem(TABKEY, name); }catch(e){}
   }
-  $('tabFlip').addEventListener('click', function(){ activate('flip'); });
-  $('tabRpgt').addEventListener('click', function(){ activate('rpgt'); });
+  TABS.forEach(function(p){ var b=$(TABBTN[p]); if(b) b.addEventListener('click',function(){ activate(p); }); });
   var goR = $('goRpgt2'); if(goR) goR.addEventListener('click', function(){ activate('rpgt'); window.scrollTo({top:0,behavior:'smooth'}); });
 
   /* ---------------- THEME ---------------- */
@@ -655,7 +739,263 @@ footer a:hover{text-decoration:underline}
     calc();
   })();
 
+  /* ================= FARAID CALCULATOR ================= */
+  (function(){
+    // ---- exact-fraction engine (verified) ----
+    function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t;}return a||1;}
+    function F(n,d){if(d<0){n=-n;d=-d;}var g=gcd(n,d);return [n/g,d/g];}
+    function add(a,b){return F(a[0]*b[1]+b[0]*a[1],a[1]*b[1]);}
+    function sub(a,b){return F(a[0]*b[1]-b[0]*a[1],a[1]*b[1]);}
+    function mul(a,b){return F(a[0]*b[0],a[1]*b[1]);}
+    function cmp(a,b){return a[0]*b[1]-b[0]*a[1];}
+    function isZero(a){return a[0]===0;}
+    function lcm(a,b){return a/gcd(a,b)*b;}
+
+    function faraid(H){
+      var g=function(k){ return (H[k]|0)||0; };
+      var husband=g('husband')?1:0, wife=g('wife'), father=g('father')?1:0, mother=g('mother')?1:0;
+      var gfather=g('gfather')?1:0, gmother=g('gmother');
+      var son=g('son'), daughter=g('daughter'), grandson=g('grandson'), granddaughter=g('granddaughter');
+      var fbro=g('fbro'), fsis=g('fsis'), cbro=g('cbro'), csis=g('csis'), uter=g('uterine');
+      var flags=[], shares={};
+      function set(k,fr){ shares[k]=fr; }
+
+      if(father && gfather){ gfather=0; }
+      if(mother && gmother){ gmother=0; }
+      if(son && grandson){ grandson=0; }
+      var gdBlocked=false;
+      if(son>0){ granddaughter=0; gdBlocked=true; }
+      else if(daughter>=2 && grandson===0){ granddaughter=0; gdBlocked=true; }
+
+      var hasMaleDesc=(son>0)||(grandson>0);
+      var hasDesc=(son>0)||(daughter>0)||(grandson>0)||(granddaughter>0);
+      var sibCountRaw=fbro+fsis+cbro+csis+uter;
+
+      if(hasDesc || father || gfather){ if(uter>0){ uter=0; } }
+      var fullBlocked=(father>0)||hasMaleDesc;
+      var consBlocked=(father>0)||hasMaleDesc||(fbro>0);
+
+      var jadd=(gfather>0)&&!hasMaleDesc&&((fbro+fsis+cbro+csis)>0);
+      if(jadd){ flags.push('Datuk bersama adik-beradik (jadd wal ikhwah) — kaedah khas ikut mazhab. Hasil ini menganggap datuk menghalang adik-beradik; sila sahkan dengan pejabat agama / e-Faraid.'); fullBlocked=true; consBlocked=true; }
+      if(fullBlocked){ fbro=0; fsis=0; }
+      if(consBlocked){ cbro=0; csis=0; }
+
+      var umariyyah=(husband||wife>0) && father && mother && !hasDesc && sibCountRaw===0 && !gfather;
+
+      if(husband){ set('husband', hasDesc?F(1,4):F(1,2)); }
+      if(wife>0){ set('wife', hasDesc?F(1,8):F(1,4)); }
+
+      if(umariyyah){
+        var spouseFr = husband? shares['husband'] : shares['wife'];
+        var remainder = sub(F(1,1), spouseFr);
+        set('mother', mul(F(1,3), remainder));
+      } else {
+        if(mother){ var mr=hasDesc||(sibCountRaw>=2); set('mother', mr?F(1,6):F(1,3)); }
+        if(gmother>0 && !mother){ set('gmother', F(1,6)); }
+      }
+
+      var patriarch = father? 'father' : (gfather? 'gfather' : null);
+      if(father || gfather){
+        if(hasMaleDesc){ set(patriarch, F(1,6)); }
+        else if(hasDesc){ set(patriarch, F(1,6)); }
+        else { set(patriarch, F(0,1)); }
+      }
+
+      var asobahGroup=null;
+      if(son>0){ asobahGroup={type:'children'}; }
+      else {
+        if(daughter>=2){ set('daughter', F(2,3)); }
+        else if(daughter===1){ set('daughter', F(1,2)); }
+        if(grandson>0){ asobahGroup={type:'grandchildren'}; }
+        else if(granddaughter>0 && !gdBlocked){
+          if(daughter===1){ set('granddaughter', F(1,6)); }
+          else if(daughter===0){ set('granddaughter', granddaughter>=2?F(2,3):F(1,2)); }
+        }
+      }
+
+      if(uter>0){ set('uterine', uter>=2?F(1,3):F(1,6)); }
+
+      var femaleDescPresent=(daughter>0)||(granddaughter>0 && !gdBlocked);
+      if(!fullBlocked && (fbro>0||fsis>0)){
+        if(fbro>0){
+          if(!asobahGroup || (asobahGroup.type!=='children'&&asobahGroup.type!=='grandchildren')){ asobahGroup={type:'fullsibs'}; }
+        } else {
+          if(femaleDescPresent){ if(!asobahGroup) asobahGroup={type:'fullsis_maa'}; }
+          else { set('fsis', fsis>=2?F(2,3):F(1,2)); }
+        }
+      }
+      if(!consBlocked && (cbro>0||csis>0) && !(asobahGroup&&asobahGroup.type==='fullsibs')){
+        if(cbro>0){ if(!asobahGroup) asobahGroup={type:'conssibs'}; }
+        else {
+          if(fsis===1 && !femaleDescPresent){ set('csis', F(1,6)); }
+          else if(fsis===0 && !femaleDescPresent){ set('csis', csis>=2?F(2,3):F(1,2)); }
+          else if(femaleDescPresent && fsis===0){ if(!asobahGroup) asobahGroup={type:'conssis_maa'}; }
+        }
+      }
+
+      if(husband && !hasDesc && !father && (mother||gmother>0) && uter>=2 && fbro>0){
+        flags.push('Kes Musytarakah (suami + ibu/nenek + ≥2 saudara seibu + saudara kandung). Ikut mazhab Syafie saudara kandung berkongsi 1/3 bersama saudara seibu — hasil ini belum ambil kira perkongsian itu; sila sahkan dengan pejabat agama / e-Faraid.');
+      }
+
+      function distributeChildren(sh,maleKey,femKey,males,fems,res){
+        var units=males*2+fems*1; if(units===0) return;
+        var per=F(res[0], res[1]*units);
+        if(males>0) sh[maleKey]=add(sh[maleKey]||F(0,1), mul(per,F(males*2,1)));
+        if(fems>0) sh[femKey]=add(sh[femKey]||F(0,1), mul(per,F(fems,1)));
+      }
+
+      function sumFurud(){ var s=F(0,1); for(var k in shares){ s=add(s,shares[k]); } return s; }
+      var total=sumFurud();
+      var radd=false, awl=false, baitulmal=F(0,1);
+
+      if(cmp(total,F(1,1))>0){
+        awl=true;
+        for(var k2 in shares){ shares[k2]=mul(shares[k2], F(total[1], total[0])); }
+      } else {
+        var residue=sub(F(1,1), total);
+        if(cmp(residue,F(0,1))>0){
+          var doRadd=function(){
+            var base=F(0,1);
+            for(var k in shares){ if(k==='husband'||k==='wife') continue; base=add(base,shares[k]); }
+            if(isZero(base)){ baitulmal=residue; }
+            else { radd=true;
+              for(var kk in shares){ if(kk==='husband'||kk==='wife') continue;
+                var portion=mul(residue, F(shares[kk][0]*base[1], shares[kk][1]*base[0]));
+                shares[kk]=add(shares[kk], portion);
+              }
+            }
+          };
+          if(son>0){ distributeChildren(shares,'son','daughter',son,daughter,residue); }
+          else if(asobahGroup && asobahGroup.type==='grandchildren'){ distributeChildren(shares,'grandson','granddaughter',grandson,granddaughter,residue); }
+          else if(father || gfather){ if(!hasMaleDesc){ shares[patriarch]=add(shares[patriarch]||F(0,1), residue); } else { doRadd(); } }
+          else if(asobahGroup && asobahGroup.type==='fullsibs'){ distributeChildren(shares,'fbro','fsis',fbro,fsis,residue); }
+          else if(asobahGroup && asobahGroup.type==='fullsis_maa'){ shares['fsis']=add(shares['fsis']||F(0,1), residue); }
+          else if(asobahGroup && asobahGroup.type==='conssibs'){ distributeChildren(shares,'cbro','csis',cbro,csis,residue); }
+          else if(asobahGroup && asobahGroup.type==='conssis_maa'){ shares['csis']=add(shares['csis']||F(0,1), residue); }
+          else { doRadd(); }
+        }
+      }
+      for(var kz in shares){ if(isZero(shares[kz])) delete shares[kz]; }
+      return { shares:shares, flags:flags, awl:awl, radd:radd, umariyyah:umariyyah, baitulmal:baitulmal,
+               counts:{gfather:gfather,gmother:gmother,grandson:grandson,granddaughter:granddaughter,fbro:fbro,fsis:fsis,cbro:cbro,csis:csis,uter:uter} };
+    }
+
+    // ---- heir config + UI ----
+    var HEIRS=[
+      {g:'spouse',k:'husband',max:1,label:'Husband'},
+      {g:'spouse',k:'wife',max:4,label:'Wife',sub:'up to 4'},
+      {g:'parents',k:'father',max:1,label:'Father'},
+      {g:'parents',k:'mother',max:1,label:'Mother'},
+      {g:'parents',k:'gfather',max:1,label:'Grandfather',sub:'paternal'},
+      {g:'parents',k:'gmother',max:2,label:'Grandmother'},
+      {g:'children',k:'son',max:30,label:'Sons'},
+      {g:'children',k:'daughter',max:30,label:'Daughters'},
+      {g:'grand',k:'grandson',max:30,label:'Grandsons',sub:"son's sons"},
+      {g:'grand',k:'granddaughter',max:30,label:'Granddaughters',sub:"son's daughters"},
+      {g:'siblings',k:'fbro',max:30,label:'Full brothers'},
+      {g:'siblings',k:'fsis',max:30,label:'Full sisters'},
+      {g:'siblings',k:'cbro',max:30,label:'Paternal half-brothers'},
+      {g:'siblings',k:'csis',max:30,label:'Paternal half-sisters'},
+      {g:'siblings',k:'uterine',max:30,label:'Maternal half-siblings'}
+    ];
+    var LABELS={}; HEIRS.forEach(function(h){ LABELS[h.k]=h; });
+    var DISP={husband:['Husband','',''],wife:['Wife','','wives'],father:['Father','',''],mother:['Mother','',''],
+      gfather:['Grandfather','paternal',''],gmother:['Grandmother','','grandmothers'],
+      son:['Son','','sons'],daughter:['Daughter','','daughters'],
+      grandson:['Grandson','via son','grandsons'],granddaughter:['Granddaughter','via son','granddaughters'],
+      fbro:['Full brother','','full brothers'],fsis:['Full sister','','full sisters'],
+      cbro:['Paternal half-brother','','paternal half-brothers'],csis:['Paternal half-sister','','paternal half-sisters'],
+      uterine:['Maternal half-sibling','','maternal half-siblings']};
+    var ORDER=['husband','wife','father','mother','gfather','gmother','son','daughter','grandson','granddaughter','fbro','fsis','cbro','csis','uterine'];
+
+    var state={}; HEIRS.forEach(function(h){ state[h.k]=0; });
+    var EX={wife:1,father:1,daughter:2};
+    var LS='faraid.lelong.v1';
+    var form=$('faraidForm');
+
+    function stepEl(h){
+      var wrap=document.createElement('div'); wrap.className='heir'; wrap.dataset.k=h.k;
+      wrap.innerHTML='<div class="hn">'+h.label+(h.sub?'<small>'+h.sub+'</small>':'')+'</div>'+
+        '<div class="step"><button type="button" data-d="-1" aria-label="less">−</button>'+
+        '<input type="text" inputmode="numeric" value="0" aria-label="'+h.label+'">'+
+        '<button type="button" data-d="1" aria-label="more">+</button></div>';
+      return wrap;
+    }
+    function clampSet(k,v){
+      var h=LABELS[k]; v=Math.max(0,Math.min(h.max, v|0)); state[k]=v;
+      var row=document.querySelector('.heir[data-k="'+k+'"]');
+      if(row){ var inp=row.querySelector('input'); inp.value=v; inp.classList.toggle('pos',v>0); row.classList.toggle('on',v>0);
+        row.querySelector('[data-d="-1"]').disabled=(v<=0); row.querySelector('[data-d="1"]').disabled=(v>=h.max); }
+    }
+    function readEstate(){ var v=num($('faEstate').value); return isNaN(v)?0:v; }
+    function amtTxt(n){ return money(n).replace('.00',''); }
+
+    function render(){
+      var r=faraid(state);
+      var out=$('faOut'), chips=$('faChips');
+      var anyHeir=HEIRS.some(function(h){ return state[h.k]>0; });
+      if(!anyHeir){ out.innerHTML='<p class="fempty">Select the living heirs to see the Faraid distribution.</p>'; chips.innerHTML='<span class="chip rate">Asal masalah —</span>'; return; }
+      var keys=Object.keys(r.shares);
+      if(keys.length===0 && isZero(r.baitulmal)){ out.innerHTML='<p class="fempty">No eligible heirs among those selected.</p>'; chips.innerHTML='<span class="chip rate">—</span>'; return; }
+
+      var asal=1; keys.forEach(function(k){ asal=lcm(asal, r.shares[k][1]); });
+      if(!isZero(r.baitulmal)) asal=lcm(asal, r.baitulmal[1]);
+      var estate=readEstate();
+      var cnt=function(k){ return (r.counts[k]!==undefined)? r.counts[k] : state[k]; };
+
+      var rows='';
+      ORDER.forEach(function(k){
+        if(!r.shares[k]) return;
+        var fr=r.shares[k]; var saham=fr[0]*asal/fr[1]; var pct=fr[0]/fr[1]*100;
+        var c=(k==='uterine')?cnt('uter'):cnt(k); var d=DISP[k];
+        var nm=(c>1 && d[2])?(c+' '+d[2]):d[0];
+        var sm=d[1]?(' <small>'+d[1]+'</small>'):'';
+        var amtCell='—';
+        if(estate>0){ var amt=estate*fr[0]/fr[1]; amtCell=amtTxt(amt); if(c>1){ amtCell+='<br><small>'+amtTxt(amt/c)+' each</small>'; } }
+        rows+='<tr><td class="hname">'+nm+sm+'</td><td class="frac">'+saham+'/'+asal+'</td><td>'+(pct%1===0?pct:pct.toFixed(1))+'%</td><td class="amt">'+amtCell+'</td></tr>';
+      });
+      if(!isZero(r.baitulmal)){
+        var bs=r.baitulmal[0]*asal/r.baitulmal[1];
+        rows+='<tr><td class="hname">Baitulmal <small>no residuary heir</small></td><td class="frac">'+bs+'/'+asal+'</td><td>'+(r.baitulmal[0]/r.baitulmal[1]*100).toFixed(1)+'%</td><td class="amt">'+(estate>0?amtTxt(estate*r.baitulmal[0]/r.baitulmal[1]):'—')+'</td></tr>';
+      }
+      var foot=estate>0?('<tfoot><tr><td>Total</td><td>'+asal+'/'+asal+'</td><td>100%</td><td class="amt">'+amtTxt(estate)+'</td></tr></tfoot>'):'';
+      var table='<div class="ftable-wrap"><table class="ftable"><thead><tr><th>Heir</th><th>Share</th><th>%</th><th>Amount</th></tr></thead><tbody>'+rows+'</tbody>'+foot+'</table></div>';
+
+      // blocked heirs (selected but receive nothing)
+      var blocked=[];
+      HEIRS.forEach(function(h){ if(state[h.k]>0 && !r.shares[h.k]){ blocked.push(DISP[h.k][0]); } });
+      var blockedHtml=blocked.length?('<div class="flag" style="background:var(--surface-2);border-color:var(--line);color:var(--ink-soft)">Blocked (hijab) — receive nothing: '+blocked.join(', ')+'.</div>'):'';
+
+      var ch='<span class="chip rate">Asal masalah '+asal+'</span>';
+      if(r.awl) ch+=' <span class="chip">‘Awl</span>';
+      if(r.radd) ch+=' <span class="chip">Radd</span>';
+      if(r.umariyyah) ch+=' <span class="chip">Umariyyah</span>';
+      chips.innerHTML=ch;
+
+      var flagsHtml=''; r.flags.forEach(function(f){ flagsHtml+='<div class="flag">⚠ '+f+'</div>'; });
+      out.innerHTML=table+flagsHtml+blockedHtml;
+    }
+
+    function save(){ try{ var d={e:$('faEstate').value}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
+    function applyState(obj){ HEIRS.forEach(function(h){ clampSet(h.k, obj[h.k]||0); }); }
+    function load(){ try{ var raw=localStorage.getItem(LS); if(!raw) return false; var d=JSON.parse(raw); if(d.e!=null)$('faEstate').value=d.e; applyState(d); return true; }catch(e){ return false; } }
+
+    HEIRS.forEach(function(h){
+      var cont=document.querySelector('.heirgrid[data-group="'+h.g+'"]'); if(!cont) return;
+      var el=stepEl(h); cont.appendChild(el);
+      el.querySelector('[data-d="-1"]').addEventListener('click',function(){ clampSet(h.k,state[h.k]-1); render(); save(); });
+      el.querySelector('[data-d="1"]').addEventListener('click',function(){ clampSet(h.k,state[h.k]+1); render(); save(); });
+      el.querySelector('input').addEventListener('input',function(e){ var n=parseInt((e.target.value||'').replace(/[^0-9]/g,''),10); clampSet(h.k, isNaN(n)?0:n); render(); save(); hideHintIn(form); });
+    });
+    $('faEstate').addEventListener('input',function(){ render(); save(); hideHintIn(form); });
+    $('faExample').addEventListener('click',function(){ $('faEstate').value='240000'; HEIRS.forEach(function(h){ clampSet(h.k, EX[h.k]||0); }); render(); save(); });
+    $('faClear').addEventListener('click',function(){ HEIRS.forEach(function(h){ clampSet(h.k,0); }); render(); save(); hideHintIn(form); });
+
+    if(load()) hideHintIn(form); else applyState(EX);
+    render();
+  })();
+
   /* restore last tab */
-  try{ var saved=localStorage.getItem(TABKEY); if(saved==='rpgt') activate('rpgt'); }catch(e){}
+  try{ var saved=localStorage.getItem(TABKEY); if(saved) activate(saved); }catch(e){}
 })();
 </script>
