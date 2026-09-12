@@ -122,6 +122,8 @@ input[type="date"],input[type="text"]{width:100%;font-family:var(--sans);font-si
   padding:11px 12px;transition:.15s;font-variant-numeric:tabular-nums}
 input.money{padding-left:38px;font-weight:600}
 input.pct{padding-right:32px;font-weight:600}
+input.auto{background:var(--surface-2);color:var(--ink-soft);cursor:default;font-weight:700}
+input.auto:focus{box-shadow:none;border-color:var(--line-strong)}
 input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-wash)}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
 input[type="date"]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer}
@@ -317,19 +319,27 @@ footer a:hover{text-decoration:underline}
         </fieldset>
 
         <fieldset>
-          <legend>Financing during hold</legend>
+          <legend>Loan &amp; financing</legend>
           <div class="rows">
             <div class="field">
-              <label for="fMonthly">Monthly instalment</label>
-              <div class="control"><span class="rm">RM</span><input type="text" inputmode="decimal" class="money" id="fMonthly" value="800"></div>
+              <label for="fRate">Interest rate <span class="help">% per year</span></label>
+              <div class="control"><input type="text" inputmode="decimal" class="pct" id="fRate" value="4"><span class="suffix">%</span></div>
             </div>
             <div class="field">
-              <label for="fIntPct">Interest portion <span class="help">% of instalment</span></label>
+              <label for="fTenure">Loan tenure <span class="help">years</span></label>
+              <div class="control"><input type="text" inputmode="decimal" class="pct" id="fTenure" value="35"><span class="suffix">yr</span></div>
+            </div>
+            <div class="field">
+              <label for="fIntPct">Interest portion <span class="help">% of instalment that is interest</span></label>
               <div class="control"><input type="text" inputmode="decimal" class="pct" id="fIntPct" value="70"><span class="suffix">%</span></div>
             </div>
-            <div class="field full">
-              <label for="fMonths">Holding period <span class="help">months paying instalments</span></label>
+            <div class="field">
+              <label for="fMonths">Holding period <span class="help">months held</span></label>
               <div class="control"><input type="text" inputmode="decimal" class="pct" id="fMonths" value="9"><span class="suffix">mo</span></div>
+            </div>
+            <div class="field full">
+              <label for="fMonthly">Monthly instalment <span class="help">auto-calculated from loan, rate &amp; tenure</span></label>
+              <div class="control"><span class="rm">RM</span><input type="text" class="money auto" id="fMonthly" readonly tabindex="-1"></div>
             </div>
           </div>
         </fieldset>
@@ -383,7 +393,7 @@ footer a:hover{text-decoration:underline}
           <h4>1 · Capital needed (modal)</h4>
           <p>The cash you must front up: <code>Downpayment + Legal fees + Renovation</code>. The downpayment is the part of the purchase price the bank does not finance (100% − loan margin).</p>
           <h4>2 · Net profit</h4>
-          <p><code>(Selling − Purchase) − Legal fees − Renovation − Agent commission − Bank interest</code>. Agent commission is a % of the selling price; bank interest is <code>Monthly instalment × Interest portion × Months held</code>.</p>
+          <p><code>(Selling − Purchase) − Legal fees − Renovation − Agent commission − Bank interest</code>. Agent commission is a % of the selling price. The monthly instalment is worked out from the loan, interest rate and tenure; the bank-interest cost of the hold is <code>Monthly instalment × Interest portion × Months held</code>.</p>
           <h4>3 · ROI</h4>
           <p><code>Net profit ÷ Capital needed × 100%</code> — your return on the cash actually invested, before tax.</p>
           <p style="margin-top:12px">This profit is <b>before RPGT</b>. Use the <button type="button" class="linkbtn" id="goRpgt2">RPGT tab</button> to estimate the tax on your gain.</p>
@@ -602,7 +612,7 @@ footer a:hover{text-decoration:underline}
   </section>
 
   <footer>
-    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v7</span></span>
+    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v8</span></span>
     <span class="brandmark">Lelong Academy</span>
   </footer>
 </div>
@@ -648,12 +658,21 @@ footer a:hover{text-decoration:underline}
   /* ================= FLIP CALCULATOR ================= */
   (function(){
     var LS='flip.lelong.v1';
-    var KEYS=['fBuy','fMargin','fSell','fLegalPct','fReno','fAgentPct','fMonthly','fIntPct','fMonths'];
-    var EX={fBuy:'200000',fMargin:'90',fSell:'300000',fLegalPct:'6',fReno:'10000',fAgentPct:'3',fMonthly:'800',fIntPct:'70',fMonths:'9'};
+    var KEYS=['fBuy','fMargin','fSell','fLegalPct','fReno','fAgentPct','fRate','fTenure','fIntPct','fMonths'];
+    var EX={fBuy:'200000',fMargin:'90',fSell:'300000',fLegalPct:'6',fReno:'10000',fAgentPct:'3',fRate:'4',fTenure:'35',fIntPct:'70',fMonths:'9'};
     var form=$('flipForm');
 
     function pct(id){ var v=num($(id).value); return isNaN(v)?0:v/100; }
     function amt(id){ var v=num($(id).value); return isNaN(v)?0:v; }
+    // monthly instalment on a reducing-balance loan
+    function monthlyPayment(P, annualPct, years){
+      var n=Math.round(years*12);
+      if(n<=0 || P<=0) return 0;
+      var r=annualPct/100/12;
+      if(r===0) return P/n;
+      var f=Math.pow(1+r, n);
+      return P*r*f/(f-1);
+    }
 
     function blank(){
       ['fmDown','fmLegal','fmReno','fModal','fpSell','fpBuy','fGross','fpLegal','fpReno','fAgent','fInterest'].forEach(function(id){ setV(id,'—'); });
@@ -668,9 +687,11 @@ footer a:hover{text-decoration:underline}
       if(isNaN(buy)||isNaN(sell)){ return blank(); }
 
       var margin=pct('fMargin'), legalP=pct('fLegalPct'), agentP=pct('fAgentPct'), intP=pct('fIntPct');
-      var reno=amt('fReno'), monthly=amt('fMonthly'), months=amt('fMonths');
+      var reno=amt('fReno'), months=amt('fMonths'), rate=amt('fRate'), tenure=amt('fTenure');
 
       var loan=buy*margin, down=buy-loan;
+      var monthly=monthlyPayment(loan, rate, tenure);
+      $('fMonthly').value = monthly>0 ? Math.round(monthly).toLocaleString('en-US') : '';
       var legal=buy*legalP, agent=sell*agentP, interest=monthly*intP*months;
       var modal=down+legal+reno;
       var gross=sell-buy;
@@ -724,7 +745,7 @@ footer a:hover{text-decoration:underline}
     form.addEventListener('input',calc);
     $('fReset').addEventListener('click',function(){ apply(EX); calc(); });
     $('fClear').addEventListener('click',function(){
-      ['fBuy','fSell','fReno','fMonthly'].forEach(function(k){ $(k).value=''; });
+      ['fBuy','fSell','fReno'].forEach(function(k){ $(k).value=''; });
       hideHintIn(form); calc();
     });
     form.querySelectorAll('input').forEach(function(el){ el.addEventListener('input',function(){ hideHintIn(form); },{once:true}); });
