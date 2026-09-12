@@ -235,6 +235,11 @@ footer a:hover{text-decoration:underline}
 .ftable .frac{color:var(--primary-ink);font-weight:700;white-space:nowrap}
 .ftable .amt{color:var(--gold);font-weight:700;white-space:nowrap}
 .ftable tfoot td{border-bottom:0;border-top:1.5px solid var(--line-strong);font-weight:700;color:var(--ink);padding-top:11px}
+.prefaraid{border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;margin:2px 0 14px;background:var(--surface-2)}
+.pf-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.pf-row .rmv{white-space:nowrap}
+.pf-row.tot{font-weight:700;color:var(--ink);border-top:1px solid var(--line-strong);margin-top:5px;padding-top:7px}
+.pf-note{margin:12px 0 2px;padding:10px 12px;border-radius:var(--r-sm);background:var(--primary-wash);color:var(--primary-ink);font-size:12.5px;font-weight:500;line-height:1.55}
 .fempty{color:var(--ink-faint);font-size:14px;padding:22px 4px;text-align:center;line-height:1.5}
 .flag{margin:12px 0 0;padding:11px 13px;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;line-height:1.5;
   background:color-mix(in srgb,var(--warn) 13%,transparent);border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);color:var(--warn)}
@@ -535,9 +540,23 @@ footer a:hover{text-decoration:underline}
           </div>
         </fieldset>
         <div class="field full estate-field">
-          <label for="faEstate">Net estate to distribute <span class="help">after debts, funeral, wasiat &amp; harta sepencarian</span></label>
+          <label for="faEstate">Estate value <span class="help">after debts, funeral &amp; valid wasiat (up to 1/3)</span></label>
           <div class="control"><span class="rm">RM</span><input type="text" inputmode="decimal" class="money" id="faEstate" value="240000"></div>
         </div>
+        <fieldset>
+          <legend>Harta sepencarian — claimed before faraid</legend>
+          <div class="rows">
+            <div class="field">
+              <label for="faSpen">Jointly-acquired value <span class="help">part built together in the marriage (0 if none)</span></label>
+              <div class="control"><span class="rm">RM</span><input type="text" inputmode="decimal" class="money" id="faSpen" value="0"></div>
+            </div>
+            <div class="field">
+              <label for="faSpenPct">Surviving spouse's share <span class="help">usually 50%; the Syariah court decides</span></label>
+              <div class="control"><input type="text" inputmode="decimal" class="pct" id="faSpenPct" value="50"><span class="suffix">%</span></div>
+            </div>
+          </div>
+          <p class="spouse-note">The surviving husband/wife takes this share first (their own right, not inheritance); only the remainder is divided by faraid — and the spouse still inherits a faraid share of that remainder.</p>
+        </fieldset>
         <fieldset><legend>Spouse</legend><div class="heirgrid" data-group="spouse"></div>
           <p class="spouse-note">Leave at 0 if the deceased was unmarried, divorced, or the spouse has also passed away.</p>
         </fieldset>
@@ -577,13 +596,13 @@ footer a:hover{text-decoration:underline}
         </div>
       </details>
       <div class="disclaimer">
-        <b>Guidance only — not a fatwa or a legal ruling.</b> This tool covers the common heirs and the standard Shafi'i rules, and should be cross-checked against the official <b>e-Faraid</b> / your State Islamic Religious Department (Pejabat Agama / Amanah Raya) before any estate is divided. It does <b>not</b> resolve special cases such as grandfather-with-siblings (jadd wal ikhwah), musytarakah, khunsa, missing heirs (mafqud), an unborn child (janin) or distant kin (dzawil arham) — these are flagged for an officer. The estate entered should already be net of debts, funeral costs, valid wasiat (up to 1/3) and any harta sepencarian.
+        <b>Guidance only — not a fatwa or a legal ruling.</b> This tool covers the common heirs and the standard Shafi'i rules, and should be cross-checked against the official <b>e-Faraid</b> / your State Islamic Religious Department (Pejabat Agama / Amanah Raya) before any estate is divided. It does <b>not</b> resolve special cases such as grandfather-with-siblings (jadd wal ikhwah), musytarakah, khunsa, missing heirs (mafqud), an unborn child (janin) or distant kin (dzawil arham) — these are flagged for an officer. The estate entered should already be net of debts, funeral costs and valid wasiat (up to 1/3); harta sepencarian is deducted by the field above and the split (usually 1/2) is decided by the Syariah court on the facts.
       </div>
     </div>
   </section>
 
   <footer>
-    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v6</span></span>
+    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v7</span></span>
     <span class="brandmark">Lelong Academy</span>
   </footer>
 </div>
@@ -1010,7 +1029,14 @@ footer a:hover{text-decoration:underline}
 
       var asal=1; keys.forEach(function(k){ asal=lcm(asal, r.shares[k][1]); });
       if(!isZero(r.baitulmal)) asal=lcm(asal, r.baitulmal[1]);
-      var estate=readEstate();
+      // harta sepencarian: surviving spouse claims their share first, then faraid the rest
+      var grossEstate=readEstate();
+      var spen=num($('faSpen').value); if(isNaN(spen)||spen<0) spen=0;
+      var spenPct=num($('faSpenPct').value); if(isNaN(spenPct)||spenPct<0) spenPct=0; if(spenPct>100) spenPct=100;
+      var spouseKey=state.husband>0?'husband':(state.wife>0?'wife':null);
+      var claim=0;
+      if(spouseKey && spen>0 && spenPct>0 && grossEstate>0){ claim=spen*(spenPct/100); if(claim>grossEstate) claim=grossEstate; }
+      var estate=Math.max(grossEstate-claim,0); // estate actually divided by faraid
       var cnt=function(k){ return (r.counts[k]!==undefined)? r.counts[k] : state[k]; };
 
       var rows='';
@@ -1057,16 +1083,35 @@ footer a:hover{text-decoration:underline}
       if(r.radd){ basisRows+='<div class="bi"><div class="bi-r"><b>Radd</b> — a surplus was left with no residuary heir, so it returns to the fixed-share heirs (a spouse is excluded).</div><div class="bi-d">Al-radd — welfare practice for heirs in Malaysia</div></div>'; }
       var basisHtml=basisRows?('<details class="basis" open><summary>Basis for each share (dalil)<span class="ico">›</span></summary><div class="basis-body">'+basisRows+'</div></details>'):'';
 
+      // harta sepencarian pre-faraid block + combined spouse total
+      var pf='', pfNote='';
+      if(claim>0){
+        var spName=spouseKey==='husband'?'Husband':'Wife';
+        var pctTxt=(spenPct%1===0?spenPct:spenPct.toFixed(1));
+        pf='<div class="prefaraid">'+
+           '<div class="pf-row"><span>Estate value</span><span class="rmv">'+amtTxt(grossEstate)+'</span></div>'+
+           '<div class="pf-row"><span>− Harta sepencarian ('+spName+' '+pctTxt+'% of '+amtTxt(spen)+')</span><span class="rmv">−'+amtTxt(claim)+'</span></div>'+
+           '<div class="pf-row tot"><span>Estate for faraid</span><span class="rmv">'+amtTxt(estate)+'</span></div>'+
+           '</div>';
+        if(r.shares[spouseKey]){
+          var fShare=estate*r.shares[spouseKey][0]/r.shares[spouseKey][1];
+          pfNote='<div class="pf-note">Surviving '+(spouseKey==='husband'?'husband':'wife')+' receives <b>'+amtTxt(claim)+'</b> as harta sepencarian, plus <b>'+amtTxt(fShare)+'</b> from faraid — total <b>'+amtTxt(claim+fShare)+'</b>.</div>';
+        }
+      } else if(spen>0 && spenPct>0 && !spouseKey){
+        pfNote='<div class="pf-note" style="background:var(--surface-2);color:var(--ink-soft)">No surviving spouse is selected, so the harta sepencarian claim is not applied.</div>';
+      }
+
       var flagsHtml=''; r.flags.forEach(function(f){ flagsHtml+='<div class="flag">⚠ '+f+'</div>'; });
-      out.innerHTML=table+basisHtml+flagsHtml+blockedHtml;
+      out.innerHTML=pf+table+pfNote+basisHtml+flagsHtml+blockedHtml;
     }
 
-    function save(){ try{ var d={e:$('faEstate').value, dec:getDeceased(), radd:(getRadd()?'radd':'baitulmal')}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
+    function save(){ try{ var d={e:$('faEstate').value, spen:$('faSpen').value, spenPct:$('faSpenPct').value, dec:getDeceased(), radd:(getRadd()?'radd':'baitulmal')}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
     function applyState(obj){ HEIRS.forEach(function(h){ clampSet(h.k, obj[h.k]||0); }); }
     function load(){ try{ var raw=localStorage.getItem(LS); if(!raw) return false; var d=JSON.parse(raw);
       if(d.dec){ var rr=document.querySelector('input[name="deceased"][value="'+d.dec+'"]'); if(rr) rr.checked=true; }
       if(d.radd){ var rd=document.querySelector('input[name="radd"][value="'+d.radd+'"]'); if(rd) rd.checked=true; }
-      if(d.e!=null)$('faEstate').value=d.e; applyState(d); return true; }catch(e){ return false; } }
+      if(d.e!=null)$('faEstate').value=d.e; if(d.spen!=null)$('faSpen').value=d.spen; if(d.spenPct!=null)$('faSpenPct').value=d.spenPct;
+      applyState(d); return true; }catch(e){ return false; } }
 
     HEIRS.forEach(function(h){
       var cont=document.querySelector('.heirgrid[data-group="'+h.g+'"]'); if(!cont) return;
@@ -1094,8 +1139,10 @@ footer a:hover{text-decoration:underline}
     });
 
     $('faEstate').addEventListener('input',function(){ render(); save(); hideHintIn(form); });
-    $('faExample').addEventListener('click',function(){ var m=document.querySelector('input[name="deceased"][value="male"]'); if(m) m.checked=true; applyDeceased('male'); $('faEstate').value='240000'; HEIRS.forEach(function(h){ clampSet(h.k, EX[h.k]||0); }); render(); save(); });
-    $('faClear').addEventListener('click',function(){ HEIRS.forEach(function(h){ clampSet(h.k,0); }); applyDeceased(getDeceased()); render(); save(); hideHintIn(form); });
+    $('faSpen').addEventListener('input',function(){ render(); save(); hideHintIn(form); });
+    $('faSpenPct').addEventListener('input',function(){ render(); save(); hideHintIn(form); });
+    $('faExample').addEventListener('click',function(){ var m=document.querySelector('input[name="deceased"][value="male"]'); if(m) m.checked=true; applyDeceased('male'); $('faEstate').value='240000'; $('faSpen').value='0'; $('faSpenPct').value='50'; HEIRS.forEach(function(h){ clampSet(h.k, EX[h.k]||0); }); render(); save(); });
+    $('faClear').addEventListener('click',function(){ HEIRS.forEach(function(h){ clampSet(h.k,0); }); $('faSpen').value='0'; $('faSpenPct').value='50'; applyDeceased(getDeceased()); render(); save(); hideHintIn(form); });
 
     if(load()) hideHintIn(form); else applyState(EX);
     applyDeceased(getDeceased());
