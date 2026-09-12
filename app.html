@@ -93,6 +93,7 @@ legend{padding:0;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
 /* segmented category control */
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);
   border:1px solid var(--line);border-radius:11px;padding:5px}
+.seg.seg2{grid-template-columns:repeat(2,1fr)}
 .seg label{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-align:center;gap:2px;padding:10px 6px;border-radius:7px;cursor:pointer;line-height:1.15;
   font-weight:600;font-size:13.5px;color:var(--ink-soft);transition:.15s}
@@ -213,6 +214,8 @@ footer a:hover{text-decoration:underline}
 .heir{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
 .heir .hn{font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.15}
 .heir .hn small{display:block;font-size:11px;color:var(--ink-faint);font-weight:400}
+.heir[hidden]{display:none}
+.spouse-note{font-size:11.5px;color:var(--ink-faint);margin:2px 0 0;grid-column:1/-1}
 .heir.on .hn{color:var(--primary-ink);font-weight:600}
 .step{display:inline-flex;align-items:center;flex:none;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--raised)}
 .step button{appearance:none;border:0;background:transparent;color:var(--ink-soft);width:30px;height:32px;font-size:18px;cursor:pointer;line-height:1;display:grid;place-items:center;transition:.12s}
@@ -508,11 +511,20 @@ footer a:hover{text-decoration:underline}
       <!-- INPUT -->
       <form class="card panel-pad" id="faraidForm" autocomplete="off" novalidate>
         <p class="example-hint"><b>Example estate loaded.</b> Set the heirs who are alive.</p>
+        <fieldset>
+          <legend>Deceased (si mati)</legend>
+          <div class="seg seg2" role="radiogroup" aria-label="Deceased gender">
+            <label><input type="radio" name="deceased" value="male" checked><span>Male<small>leaves a wife</small></span></label>
+            <label><input type="radio" name="deceased" value="female"><span>Female<small>leaves a husband</small></span></label>
+          </div>
+        </fieldset>
         <div class="field full estate-field">
           <label for="faEstate">Net estate to distribute <span class="help">after debts, funeral, wasiat &amp; harta sepencarian</span></label>
           <div class="control"><span class="rm">RM</span><input type="text" inputmode="decimal" class="money" id="faEstate" value="240000"></div>
         </div>
-        <fieldset><legend>Spouse</legend><div class="heirgrid" data-group="spouse"></div></fieldset>
+        <fieldset><legend>Spouse</legend><div class="heirgrid" data-group="spouse"></div>
+          <p class="spouse-note">Leave at 0 if the deceased was unmarried, divorced, or the spouse has also passed away.</p>
+        </fieldset>
         <fieldset><legend>Parents &amp; grandparents</legend><div class="heirgrid" data-group="parents"></div></fieldset>
         <fieldset><legend>Children</legend><div class="heirgrid" data-group="children"></div></fieldset>
         <fieldset><legend>Grandchildren (through a son)</legend><div class="heirgrid" data-group="grand"></div></fieldset>
@@ -555,7 +567,7 @@ footer a:hover{text-decoration:underline}
   </section>
 
   <footer>
-    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v3</span></span>
+    <span>Estimates only — not financial, tax or religious-legal advice. <span id="ver">v4</span></span>
     <span class="brandmark">Lelong Academy</span>
   </footer>
 </div>
@@ -976,9 +988,11 @@ footer a:hover{text-decoration:underline}
       out.innerHTML=table+flagsHtml+blockedHtml;
     }
 
-    function save(){ try{ var d={e:$('faEstate').value}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
+    function save(){ try{ var d={e:$('faEstate').value, dec:getDeceased()}; HEIRS.forEach(function(h){ d[h.k]=state[h.k]; }); localStorage.setItem(LS,JSON.stringify(d)); }catch(e){} }
     function applyState(obj){ HEIRS.forEach(function(h){ clampSet(h.k, obj[h.k]||0); }); }
-    function load(){ try{ var raw=localStorage.getItem(LS); if(!raw) return false; var d=JSON.parse(raw); if(d.e!=null)$('faEstate').value=d.e; applyState(d); return true; }catch(e){ return false; } }
+    function load(){ try{ var raw=localStorage.getItem(LS); if(!raw) return false; var d=JSON.parse(raw);
+      if(d.dec){ var rr=document.querySelector('input[name="deceased"][value="'+d.dec+'"]'); if(rr) rr.checked=true; }
+      if(d.e!=null)$('faEstate').value=d.e; applyState(d); return true; }catch(e){ return false; } }
 
     HEIRS.forEach(function(h){
       var cont=document.querySelector('.heirgrid[data-group="'+h.g+'"]'); if(!cont) return;
@@ -987,11 +1001,26 @@ footer a:hover{text-decoration:underline}
       el.querySelector('[data-d="1"]').addEventListener('click',function(){ clampSet(h.k,state[h.k]+1); render(); save(); });
       el.querySelector('input').addEventListener('input',function(e){ var n=parseInt((e.target.value||'').replace(/[^0-9]/g,''),10); clampSet(h.k, isNaN(n)?0:n); render(); save(); hideHintIn(form); });
     });
+
+    function getDeceased(){ var el=document.querySelector('input[name="deceased"]:checked'); return el?el.value:'male'; }
+    function applyDeceased(gender){
+      var male=(gender==='male');
+      var wifeRow=document.querySelector('.heir[data-k="wife"]');
+      var husbandRow=document.querySelector('.heir[data-k="husband"]');
+      if(wifeRow) wifeRow.hidden=!male;
+      if(husbandRow) husbandRow.hidden=male;
+      if(male){ clampSet('husband',0); } else { clampSet('wife',0); }
+    }
+    document.querySelectorAll('input[name="deceased"]').forEach(function(r){
+      r.addEventListener('change',function(){ applyDeceased(getDeceased()); render(); save(); });
+    });
+
     $('faEstate').addEventListener('input',function(){ render(); save(); hideHintIn(form); });
-    $('faExample').addEventListener('click',function(){ $('faEstate').value='240000'; HEIRS.forEach(function(h){ clampSet(h.k, EX[h.k]||0); }); render(); save(); });
-    $('faClear').addEventListener('click',function(){ HEIRS.forEach(function(h){ clampSet(h.k,0); }); render(); save(); hideHintIn(form); });
+    $('faExample').addEventListener('click',function(){ var m=document.querySelector('input[name="deceased"][value="male"]'); if(m) m.checked=true; applyDeceased('male'); $('faEstate').value='240000'; HEIRS.forEach(function(h){ clampSet(h.k, EX[h.k]||0); }); render(); save(); });
+    $('faClear').addEventListener('click',function(){ HEIRS.forEach(function(h){ clampSet(h.k,0); }); applyDeceased(getDeceased()); render(); save(); hideHintIn(form); });
 
     if(load()) hideHintIn(form); else applyState(EX);
+    applyDeceased(getDeceased());
     render();
   })();
 
